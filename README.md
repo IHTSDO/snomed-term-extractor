@@ -7,7 +7,7 @@ Terminology servers can implement best practice functionality, for example:
 - fetching subsets that include inactive concepts for reports spanning more than one SNOMED CT release
 
 SNOMED CT Terminology Servers often use standardised interfaces like HL7 FHIR, for more information see: 
-[SNOMED CT Implementation Guide / Terminology Services](https://implementation.snomed.org/terminology-services) 
+[SNOMED CT Implementation Portal / Terminology Services](https://implementation.snomed.org/terminology-services) 
 
 ## When a Terminology Server is not possible...
 Sometimes it is not possible include a terminology server in your architecture. 
