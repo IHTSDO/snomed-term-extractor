@@ -83,7 +83,7 @@ public class SnomedTermExtractorApplication {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
 			writer.write("ConceptId\tPreferredTerm\tOtherSynonyms");
 			writer.newLine();
-			writeConcepts(ancestorConcept.getChildConcepts(), langRefset, writer);
+			writeConcepts(Collections.singletonList(ancestorConcept), langRefset, writer);
 		}
 		System.out.println();
 		System.out.printf("Extract successful%n");
