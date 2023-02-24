@@ -81,7 +81,7 @@ public class SnomedTermExtractorApplication {
 		String extractFilename = format("SNOMED-CT_TermExtract_%s_%s.txt", ptToFilename(pt), componentFactory.getMaxEffectiveTime());
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
 			writer.write("ConceptId\tPreferredTerm\tOtherSynonyms");
-			writer.newLine();
+			writer.write("\r\n");
 			writeConcepts(Collections.singletonList(ancestorConcept), langRefset, writer);
 		}
 		System.out.println();
@@ -113,7 +113,7 @@ public class SnomedTermExtractorApplication {
 						writer.write(description.getTerm());
 					}
 				}
-				writer.newLine();
+				writer.write("\r\n");
 				if (countWritten.incrementAndGet() % 1_000 == 0) {
 					System.out.print(".");
 				}
