@@ -65,12 +65,12 @@ public class SnomedTermExtractorApplication {
 
 		Map<Long, Concept> conceptMap = componentFactory.getConceptMap();
 		System.out.printf("%s active concepts loaded%n", conceptMap.size());
-		System.out.printf("Extracting ancestors of %s...%n", ancestorConceptId);
+		System.out.printf("Extracting concept %s and its descendants...%n", ancestorConceptId);
 
 		Concept ancestorConcept = conceptMap.get(ancestorConceptId);
 		if (ancestorConcept == null) {
 			System.out.println();
-			System.err.printf("Ancestor concept %s not found in set of active concepts within the provided release files!", extractConceptAndDescendants);
+			System.err.printf("Concept %s is not found in set of active concepts from these release files!", extractConceptAndDescendants);
 			System.out.println();
 			System.exit(1);
 		}
