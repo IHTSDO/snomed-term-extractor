@@ -76,10 +76,9 @@ public class SnomedTermExtractorApplication {
 		}
 
 		Long langRefset = SCTIDUtil.parseSCTID(ConceptConstants.US_EN_LANGUAGE_REFERENCE_SET);
-//		ancestorConcept.sortAncestorsByPt(langRefset);
 
 		String pt = ancestorConcept.getPt(langRefset);
-		String extractFilename = format("SNOMED-CT_TermsExtract_%s_%s.txt", ptToFilename(pt), componentFactory.getMaxEffectiveTime());
+		String extractFilename = format("SNOMED-CT_TermExtract_%s_%s.txt", ptToFilename(pt), componentFactory.getMaxEffectiveTime());
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
 			writer.write("ConceptId\tPreferredTerm\tOtherSynonyms");
 			writer.newLine();
@@ -87,7 +86,7 @@ public class SnomedTermExtractorApplication {
 		}
 		System.out.println();
 		System.out.printf("Extract successful%n");
-		System.out.printf("%s concepts written to %s%n", written.size(), extractFilename);
+		System.out.printf("%s concepts written to TSV file %s%n", written.size(), extractFilename);
 	}
 
 	public String ptToFilename(String pt) {
