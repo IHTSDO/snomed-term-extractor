@@ -2,6 +2,7 @@
 ## Background
 SNOMED International advocates using a Terminology Server to access SNOMED CT content. 
 This way content can be managed and kept up to date. 
+
 Terminology servers can implement best practice functionality, for example:
 - fast multi-prefix concept search, using all active synonyms, constrained to a hierarchy or subset
 - fetching subsets that include inactive concepts for reports spanning more than one SNOMED CT release
@@ -10,11 +11,11 @@ SNOMED CT Terminology Servers often use standardised interfaces like HL7 FHIR, f
 [SNOMED CT Implementation Portal / Terminology Services](https://implementation.snomed.org/terminology-services) 
 
 ## When a Terminology Server is not possible...
-Sometimes it is not possible include a terminology server in your architecture. 
-In this case it is still possible to use SNOMED CT for data input, and to implement many of the concept search best practises.
+Sometimes it is not possible to include a terminology server in your architecture. 
+In this case it is still possible to use SNOMED CT for data input, and to implement some of the concept-search best practises.
 
 ## This Tool
-This tool provides a mechanism to extract subsets of SNOMED CT concepts from the RF2 release files into a simple TSV format.
+This tool provides a mechanism to extract subsets of SNOMED CT concepts from the RF2 release files into a simple TSV format.  
 Concept identifiers are extracted along with their preferred terms and also the acceptable synonyms.
 
 Please ensure that:
@@ -58,4 +59,4 @@ java -Xms2g -jar snomed-term-extractor.jar \
   --release-files=SnomedCT_InternationalRF2_PRODUCTION_20230131T120000Z.zip \
   --extract-concept-and-descendants=387713003
 ```
-This will create a file named `SNOMED-CT_TermExtract_Surgical-procedure_20230131.txt`.
+This will create a file named `SNOMED-CT_TermExtract_Surgical-procedure_20230131.txt`. [Here is an extract sample](https://gist.github.com/kaicode/66aee88e1549335b5f86a45bcb86803a) with the first 10 lines.
