@@ -32,6 +32,11 @@ Extracted columns are:
 | --------- | ------------- | ------------- |
 | Value will be the concept code | Value will be the preferred/display term | Value will be a pipe separated list of other terms that should be included in the search index |
 
+For example:
+| ConceptId | PreferredTerm | OtherSynonyms |
+| --------- | ------------- | ------------- |
+| 63697000 | Cardiopulmonary bypass operation | CPB - Cardiopulmonary bypass\|Cardiopulmonary bypass\|Cardiopulmonary perfusion\|Heart lung bypass |
+
 #### Extract Order
 Concepts are extracted using a depth first method with each level is sorted by preferred term. 
 The order will look similar to the hierarchy in the SNOMED International browser if switched to preferred terms and descendants are fully expanded.
