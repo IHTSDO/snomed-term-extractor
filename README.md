@@ -48,7 +48,7 @@ _(Alternatively the jar file can be compiled from the source code using
 
 Run the term extraction process on the command line:
 ```
-java -Xms2g -jar snomed-term-extractor.jar \
+java -Xms4g -jar snomed-term-extractor.jar \
   --release-files=RF2_RELEASE_ZIP_FILE \
   --extract-concept-and-descendants=CONCEPT
 ```
@@ -60,7 +60,7 @@ Where:
 For example, after downloading the RF2 release file `SnomedCT_InternationalRF2_PRODUCTION_20230131T120000Z.zip`,
 a subset of the concept `387713003 |Surgical procedure|` can be extracted using the following command:
 ```
-java -Xms2g -jar snomed-term-extractor.jar \
+java -Xms4g -jar snomed-term-extractor.jar \
   --release-files=SnomedCT_InternationalRF2_PRODUCTION_20230131T120000Z.zip \
   --extract-concept-and-descendants=387713003
 ```
