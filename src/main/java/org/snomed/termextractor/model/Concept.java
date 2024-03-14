@@ -1,12 +1,13 @@
 package org.snomed.termextractor.model;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+
+import java.util.*;
 
 public class Concept {
 
 	public static final Long PREFERRED = 900000000000548007L;
+	public static final Long ACCEPTABLE = 900000000000549004L;
 	private final Long conceptId;
 	private final List<Description> descriptions;
 	private final List<Concept> childConcepts;
@@ -62,5 +63,17 @@ public class Concept {
 
 	public List<Concept> getChildConcepts() {
 		return childConcepts;
+	}
+
+	public Set<Long> getDescendantAndSelfIds() {
+		return getDescendantAndSelfIds(new LongOpenHashSet());
+	}
+
+	private Set<Long> getDescendantAndSelfIds(Set<Long> ids) {
+		ids.add(conceptId);
+		for (Concept childConcept : getChildConcepts()) {
+			childConcept.getDescendantAndSelfIds(ids);
+		}
+		return ids;
 	}
 }

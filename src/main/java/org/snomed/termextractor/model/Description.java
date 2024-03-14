@@ -1,6 +1,7 @@
 package org.snomed.termextractor.model;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Description {
@@ -15,6 +16,15 @@ public class Description {
 		this.term = term;
 		this.languageCode = languageCode;
 		acceptabilityMap = new HashMap<>();
+	}
+
+	public boolean isAcceptable(List<Long> langRefsets) {
+		for (Long langRefset : langRefsets) {
+			if (Concept.ACCEPTABLE.equals(acceptabilityMap.get(langRefset))) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void addAcceptability(Long langRefset, Long acceptability) {

@@ -6,6 +6,7 @@ import org.ihtsdo.otf.snomedboot.factory.ImpotentComponentFactory;
 import org.snomed.termextractor.model.Concept;
 import org.snomed.termextractor.model.Description;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -29,7 +30,7 @@ public class HierarchyAndTermsComponentFactory extends ImpotentComponentFactory 
 	@Override
 	public void newDescriptionState(String id, String effectiveTime, String active, String moduleId, String conceptId, String languageCode, String typeId, String term, String caseSignificanceId) {
 		collectMaxEffectiveTime(effectiveTime);
-		if ("1".equals(active) && typeId.equals("900000000000013009")) {// Term active
+		if ("1".equals(active) && typeId.equals("900000000000013009")) {// Active synonym
 			Concept concept = conceptMap.get(SCTIDUtil.parseSCTID(conceptId));
 			if (concept != null) {// Concept will be null if it's inactive. No need to extract these.
 				Long descriptionId = SCTIDUtil.parseSCTID(id);
@@ -59,7 +60,7 @@ public class HierarchyAndTermsComponentFactory extends ImpotentComponentFactory 
 	@Override
 	public void newReferenceSetMemberState(String[] fieldNames, String id, String effectiveTime, String active, String moduleId, String refsetId, String referencedComponentId, String... otherValues) {
 		collectMaxEffectiveTime(effectiveTime);
-		if ("1".equals(active) && refsetId.equals(ConceptConstants.US_EN_LANGUAGE_REFERENCE_SET)) {
+		if ("1".equals(active) && fieldNames.length == 7 && fieldNames[6].equals("acceptabilityId")) {// Active language refsets
 			Description description = descriptionMap.get(SCTIDUtil.parseSCTID(referencedComponentId));
 			if (description != null) {
 				// id	effectiveTime	active	moduleId	refsetId	referencedComponentId	acceptabilityId

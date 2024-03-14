@@ -43,18 +43,23 @@ The order will look similar to the hierarchy in the SNOMED International browser
 
 ### Running the tool
 Download the latest jar file from the releases page.  
-_(Alternatively the jar file can be compiled from the source code using 
-[Apache Maven](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html) `mvn install`)._
+
+#### Extract Using One Concept and Subtypes
+This method extracts a specified concept and all the concept subtypes, i.e. descendants in the SNOMED CT hierarchy.
 
 Run the term extraction process on the command line:
 ```
 java -Xms4g -jar snomed-term-extractor.jar \
   --release-files=RF2_RELEASE_ZIP_FILE \
-  --extract-concept-and-descendants=CONCEPT
+  --extract-concept-and-descendants=INCLUDE_CONCEPTS
+  --exclude-concept-and-descendants=EXCLUDE_CONCEPTS
+  --language-refsets=LANGUAGE_REFSET
 ```
-Where: 
+Where:
 - `RF2_RELEASE_ZIP_FILE` is the path to the RF2 Edition you would like to extract from
-- `CONCEPT` is the id of the top level concept to extract
+- `INCLUDE_CONCEPTS` is a comma separated list of concept ids to extract, all descendants will also be extracted
+- `EXCLUDE_CONCEPTS` (Optional) is a comma separated list of concept ids to exclude from the extract, all descendants will also be excluded
+- `LANGUAGE_REFSET` is the id of the language refset to extract terms for, this can be a comma separated list
 
 #### Example
 For example, after downloading the RF2 release file `SnomedCT_InternationalRF2_PRODUCTION_20230131T120000Z.zip`,
@@ -63,5 +68,6 @@ a subset of the concept `387713003 |Surgical procedure|` can be extracted using 
 java -Xms4g -jar snomed-term-extractor.jar \
   --release-files=SnomedCT_InternationalRF2_PRODUCTION_20230131T120000Z.zip \
   --extract-concept-and-descendants=387713003
+  --language-refsets=900000000000509007
 ```
 This will create a file named `SNOMED-CT_TermExtract_Surgical-procedure_20230131.txt`. [Here is an extract sample](https://gist.github.com/kaicode/66aee88e1549335b5f86a45bcb86803a) with the first 10 lines.
