@@ -61,13 +61,22 @@ Where:
 - `EXCLUDE_CONCEPTS` (Optional) is a comma separated list of concept ids to exclude from the extract, all descendants will also be excluded
 - `LANGUAGE_REFSET` is the id of the language refset to extract terms for, this can be a comma separated list
 
-#### Example
-For example, after downloading the RF2 release file `SnomedCT_InternationalRF2_PRODUCTION_20230131T120000Z.zip`,
+#### International Example
+For example, after downloading the RF2 release file `SnomedCT_InternationalRF2_PRODUCTION_20240101T120000Z.zip`,
 a subset of the concept `387713003 |Surgical procedure|` can be extracted using the following command:
 ```
 java -Xms4g -jar snomed-term-extractor.jar \
-  --release-files=SnomedCT_InternationalRF2_PRODUCTION_20230131T120000Z.zip \
+  --release-files=SnomedCT_InternationalRF2_PRODUCTION_20240101T120000Z.zip \
   --extract-concept-and-descendants=387713003
   --language-refsets=900000000000509007
 ```
 This will create a file named `SNOMED-CT_TermExtract_Surgical-procedure_20230131.txt`. [Here is an extract sample](https://gist.github.com/kaicode/66aee88e1549335b5f86a45bcb86803a) with the first 10 lines.
+
+### Extension Example, using Sweden
+```
+java -Xms4g -jar snomed-term-extractor.jar \
+  --release-files=SnomedCT_InternationalRF2_PRODUCTION_20240201T120000Z.zip,SnomedCT_ManagedServiceSE_PRODUCTION_SE1000052_20240531T120000Z.zip \
+  --extract-concept-and-descendants=387713003 \
+  --language-refsets=46011000052107,900000000000509007
+```
+
