@@ -1,5 +1,6 @@
 package org.snomed.termextractor;
 
+import com.google.common.base.Strings;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.ihtsdo.otf.snomedboot.ReleaseImportException;
 import org.ihtsdo.otf.snomedboot.ReleaseImporter;
@@ -24,7 +25,8 @@ public class SnomedTermExtractorApplication {
 	@Value("${release-files}") String releaseFiles;
 	@Value("${extract-concept-and-descendants}") String includeConceptAndDescendants;
 	@Value("${exclude-concept-and-descendants}") String excludeConceptAndDescendants;
-	@Value("${language-refsets}") String languageRefsetParam;
+	@Value("${display-term-language-refsets}") String languageRefsetParam;
+	@Value("${synonym-language-refsets}") String synonymLanguageRefsetParam;
 	private final AtomicLong countWritten = new AtomicLong();
 	private final Set<Long> written = new LongOpenHashSet();
 
@@ -63,17 +65,26 @@ public class SnomedTermExtractorApplication {
 			releaseFileInputStreams.add(new FileInputStream(file));
 		}
 
-		List<Long> languageRefsets = new ArrayList<>();
+		List<Long> displayTermLanguageRefsets = new ArrayList<>();
 		if (languageRefsetParam == null || languageRefsetParam.isEmpty()) {
 			System.out.println();
 			System.err.println("Please provide a comma separated list of the language refsets ids that should be used to " +
-					"select terms during extraction, using the '--language-refsets=' parameter.");
+					"select terms during extraction, using the '--display-term-language-refsets=' parameter.");
 			System.out.println();
 			System.exit(1);
 		} else {
 			for (String refset : languageRefsetParam.split(",")) {
-				languageRefsets.add(SCTIDUtil.parseSCTID(refset.trim()));
+				displayTermLanguageRefsets.add(SCTIDUtil.parseSCTID(refset.trim()));
 			}
+		}
+
+		List<Long> synonymlanguageRefsets = new ArrayList<>();
+		if (!Strings.isNullOrEmpty(synonymLanguageRefsetParam)) {
+			for (String refset : synonymLanguageRefsetParam.split(",")) {
+				synonymlanguageRefsets.add(SCTIDUtil.parseSCTID(refset.trim()));
+			}
+		} else {
+			synonymlanguageRefsets = displayTermLanguageRefsets;
 		}
 
 		HierarchyAndTermsComponentFactory componentFactory = new HierarchyAndTermsComponentFactory();
@@ -85,6 +96,7 @@ public class SnomedTermExtractorApplication {
 		System.out.printf("%s active concepts loaded%n", conceptMap.size());
 
 		Set<Long> allExcludes = new LongOpenHashSet();
+		Long firstDisplayLangRefset = displayTermLanguageRefsets.get(0);
 		for (List<Long> excludeList : excludes) {
 			for (Long conceptId : excludeList) {
 				allExcludes.add(conceptId);
@@ -92,7 +104,7 @@ public class SnomedTermExtractorApplication {
 				if (concept != null) {
 					Set<Long> descendantIds = concept.getDescendantAndSelfIds();
 					System.out.printf("Excluding concept %s |%s| and descendants (%s)%n",
-							concept.getConceptId(), concept.getPt(languageRefsets.get(0)), descendantIds.size());
+							concept.getConceptId(), concept.getPt(firstDisplayLangRefset), descendantIds.size());
 					allExcludes.addAll(descendantIds);
 				}
 			}
@@ -111,12 +123,12 @@ public class SnomedTermExtractorApplication {
 				Concept ancestorConcept = conceptMap.get(ancestorConceptId);
 				checkActive(ancestorConcept);
 
-				String pt = ancestorConcept.getPt(languageRefsets.get(0));
+				String pt = ancestorConcept.getPt(firstDisplayLangRefset);
 				extractFilename = format("SNOMED-CT_TermExtract_%s_%s.txt", ptToFilename(pt), componentFactory.getMaxEffectiveTime());
 				try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
 					writer.write("ConceptId\tPreferredTerm\tOtherSynonyms");
 					writer.write("\r\n");
-					writeConcepts(Collections.singletonList(ancestorConcept), allExcludes, languageRefsets, writer);
+					writeConcepts(Collections.singletonList(ancestorConcept), allExcludes, displayTermLanguageRefsets, synonymlanguageRefsets, writer);
 				}
 
 			} else {
@@ -124,7 +136,7 @@ public class SnomedTermExtractorApplication {
 				Concept firstConcept = conceptMap.get(include.get(0));
 				checkActive(firstConcept);
 
-				String pt = firstConcept.getPt(languageRefsets.get(0));
+				String pt = firstConcept.getPt(firstDisplayLangRefset);
 				extractFilename = format("SNOMED-CT_TermExtract_%s-List_%s.txt", ptToFilename(pt), componentFactory.getMaxEffectiveTime());
 
 				try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
@@ -132,7 +144,7 @@ public class SnomedTermExtractorApplication {
 					writer.write("\r\n");
 					for (Long singleConcept : include) {
 						Concept concept = conceptMap.get(singleConcept);
-						writeConcept(concept, languageRefsets, writer);
+						writeConcept(concept, displayTermLanguageRefsets, synonymlanguageRefsets, writer);
 					}
 				}
 			}
@@ -173,31 +185,31 @@ public class SnomedTermExtractorApplication {
 		return pt.replace(" ", "-").replaceAll("[^a-zA-Z0-9_-]", "");
 	}
 
-	private void writeConcepts(List<Concept> concepts, Set<Long> allExcludes, List<Long> langRefsets, BufferedWriter writer) throws IOException {
-		concepts.sort(Comparator.comparing(concept -> concept.getPt(langRefsets.get(0))));
+	private void writeConcepts(List<Concept> concepts, Set<Long> allExcludes, List<Long> displayTermLangRefsets, List<Long> synonymlanguageRefsets, BufferedWriter writer) throws IOException {
+		concepts.sort(Comparator.comparing(concept -> concept.getPt(displayTermLangRefsets.get(0))));
 		for (Concept concept : concepts) {
 			if (allExcludes.contains(concept.getConceptId())) {
 				continue;
 			}
 			if (written.add(concept.getConceptId())) {
-				writeConcept(concept, langRefsets, writer);
+				writeConcept(concept, displayTermLangRefsets, synonymlanguageRefsets, writer);
 				if (countWritten.incrementAndGet() % 1_000 == 0) {
 					System.out.print(".");
 				}
 			}
-			writeConcepts(concept.getChildConcepts(), allExcludes, langRefsets, writer);
+			writeConcepts(concept.getChildConcepts(), allExcludes, displayTermLangRefsets, synonymlanguageRefsets, writer);
 		}
 	}
 
-	private static void writeConcept(Concept concept, List<Long> langRefsets, BufferedWriter writer) throws IOException {
+	private static void writeConcept(Concept concept, List<Long> displayTermLangRefsets, List<Long> synonymlanguageRefsets, BufferedWriter writer) throws IOException {
 		writer.write(concept.getConceptId().toString());
 		writer.write("\t");
-		String pt = concept.getPt(langRefsets.get(0));
+		String pt = concept.getPt(displayTermLangRefsets.get(0));
 		writer.write(pt);
 		writer.write("\t");
 		boolean first = true;
 		for (Description description : concept.getDescriptions()) {
-			if (!description.getTerm().equals(pt) && description.isAcceptable(langRefsets)) {
+			if (!description.getTerm().equals(pt) && description.isPreferredOrAcceptable(synonymlanguageRefsets)) {
 				if (first) {
 					first = false;
 				} else {

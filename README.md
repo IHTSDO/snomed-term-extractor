@@ -53,7 +53,8 @@ java -Xms4g -jar snomed-term-extractor.jar \
   --release-files=RF2_RELEASE_ZIP_FILE \
   --extract-concept-and-descendants=INCLUDE_CONCEPTS
   --exclude-concept-and-descendants=EXCLUDE_CONCEPTS
-  --language-refsets=LANGUAGE_REFSET
+  --display-term-language-refsets=LANGUAGE_REFSET
+  --synonym-language-refsets=LANGUAGE_REFSET
 ```
 Where:
 - `RF2_RELEASE_ZIP_FILE` is the path to the RF2 Edition you would like to extract from
@@ -61,22 +62,40 @@ Where:
 - `EXCLUDE_CONCEPTS` (Optional) is a comma separated list of concept ids to exclude from the extract, all descendants will also be excluded
 - `LANGUAGE_REFSET` is the id of the language refset to extract terms for, this can be a comma separated list
 
+ 
+- The `display-term-language-refsets` can be an ordered list. This is used to select the best available display term for each code.
+- The `synonym-language-refsets` parameter is optional. This defaults to the same values as the `display-term-language-refsets`. This can be used to control which language refsets are used to extract synonyms to support search.
+
+### Partial Translations
+If extracting terms from an extension that has a partial translation it's a good idea to include the US English or GB English language reference set as a failsafe, to avoid no display term being selected.
+- US English is `900000000000509007`
+- GB English is `900000000000508004`
+
+For example to extract Swedish terms with US English as a failsafe: `--display-term-language-refsets=46011000052107,900000000000509007`.
+- Swedish language reference set is `46011000052107`
+
+In this scenario the US terms are not useful for search, so only Swedish synonyms should be extracted: `--synonym-language-refsets=46011000052107`.
+
+### Examples
+
 #### International Example
 For example, after downloading the RF2 release file `SnomedCT_InternationalRF2_PRODUCTION_20240101T120000Z.zip`,
 a subset of the concept `387713003 |Surgical procedure|` can be extracted using the following command:
 ```
 java -Xms4g -jar snomed-term-extractor.jar \
   --release-files=SnomedCT_InternationalRF2_PRODUCTION_20240101T120000Z.zip \
-  --extract-concept-and-descendants=387713003
-  --language-refsets=900000000000509007
+  --extract-concept-and-descendants=387713003 \
+  --display-term-language-refsets=900000000000509007
 ```
 This will create a file named `SNOMED-CT_TermExtract_Surgical-procedure_20230131.txt`. [Here is an extract sample](https://gist.github.com/kaicode/66aee88e1549335b5f86a45bcb86803a) with the first 10 lines.
 
-### Extension Example, using Sweden
+#### Extension Example, using Sweden
+
 ```
 java -Xms4g -jar snomed-term-extractor.jar \
   --release-files=SnomedCT_InternationalRF2_PRODUCTION_20240201T120000Z.zip,SnomedCT_ManagedServiceSE_PRODUCTION_SE1000052_20240531T120000Z.zip \
   --extract-concept-and-descendants=387713003 \
-  --language-refsets=46011000052107,900000000000509007
+  --display-term-language-refsets=46011000052107,900000000000509007 \
+  --synonym-language-refsets=46011000052107
 ```
 

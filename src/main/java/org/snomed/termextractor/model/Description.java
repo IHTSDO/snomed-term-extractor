@@ -18,9 +18,9 @@ public class Description {
 		acceptabilityMap = new HashMap<>();
 	}
 
-	public boolean isAcceptable(List<Long> langRefsets) {
+	public boolean isPreferredOrAcceptable(List<Long> langRefsets) {
 		for (Long langRefset : langRefsets) {
-			if (Concept.ACCEPTABLE.equals(acceptabilityMap.get(langRefset))) {
+			if (acceptabilityMap.containsKey(langRefset)) {
 				return true;
 			}
 		}
