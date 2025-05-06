@@ -22,6 +22,8 @@ import static java.lang.String.format;
 @SpringBootApplication
 public class SnomedTermExtractorApplication {
 
+	public static final String EXPORT_HEADER = "ConceptCode\tDisplayTerm\tAdditionalSearchTerms";
+
 	@Value("${release-files}") String releaseFiles;
 	@Value("${extract-concept-and-descendants}") String includeConceptAndDescendants;
 	@Value("${exclude-concept-and-descendants}") String excludeConceptAndDescendants;
@@ -126,7 +128,7 @@ public class SnomedTermExtractorApplication {
 				String pt = ancestorConcept.getPt(firstDisplayLangRefset);
 				extractFilename = format("SNOMED-CT_TermExtract_%s_%s.txt", ptToFilename(pt), componentFactory.getMaxEffectiveTime());
 				try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
-					writer.write("ConceptId\tPreferredTerm\tOtherSynonyms");
+					writer.write(EXPORT_HEADER);
 					writer.write("\r\n");
 					writeConcepts(Collections.singletonList(ancestorConcept), allExcludes, displayTermLanguageRefsets, synonymlanguageRefsets, writer);
 				}
@@ -140,7 +142,7 @@ public class SnomedTermExtractorApplication {
 				extractFilename = format("SNOMED-CT_TermExtract_%s-List_%s.txt", ptToFilename(pt), componentFactory.getMaxEffectiveTime());
 
 				try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
-					writer.write("ConceptId\tPreferredTerm\tOtherSynonyms");
+					writer.write(EXPORT_HEADER);
 					writer.write("\r\n");
 					for (Long singleConcept : include) {
 						Concept concept = conceptMap.get(singleConcept);

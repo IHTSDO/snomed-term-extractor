@@ -28,12 +28,12 @@ Please ensure that:
 Each run of the tool creates a TSV file with one concept per row. 
 
 Extracted columns are:
-| ConceptId | PreferredTerm | OtherSynonyms |
+| ConceptCode | DisplayTerm | AdditionalSearchTerms |
 | --------- | ------------- | ------------- |
 | Value will be the concept code | Value will be the preferred/display term | Value will be a pipe separated list of other terms that should be included in the search index |
 
 For example:
-| ConceptId | PreferredTerm | OtherSynonyms |
+| ConceptCode | DisplayTerm | AdditionalSearchTerms |
 | --------- | ------------- | ------------- |
 | 63697000 | Cardiopulmonary bypass operation | CPB - Cardiopulmonary bypass\|Cardiopulmonary bypass\|Cardiopulmonary perfusion\|Heart lung bypass |
 
