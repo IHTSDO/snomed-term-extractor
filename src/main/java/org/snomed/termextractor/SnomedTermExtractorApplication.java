@@ -26,6 +26,7 @@ public class SnomedTermExtractorApplication {
 
 	@Value("${release-files}") String releaseFiles;
 	@Value("${extract-concept-and-descendants}") String includeConceptAndDescendants;
+	@Value("${extract-refset}") String includeRefset;
 	@Value("${exclude-concept-and-descendants}") String excludeConceptAndDescendants;
 	@Value("${display-term-language-refsets}") String languageRefsetParam;
 	@Value("${synonym-language-refsets}") String synonymLanguageRefsetParam;
@@ -39,14 +40,16 @@ public class SnomedTermExtractorApplication {
 	}
 
 	private void run() throws ReleaseImportException, IOException {
-		if (includeConceptAndDescendants.isEmpty()) {
+		if (includeConceptAndDescendants.isEmpty() && includeRefset.isEmpty()) {
 			System.out.println();
-			System.err.println("Please specify the subset of concepts to extract using the '--extract-concept-and-descendants=' parameter. " +
+			System.err.println("Please specify the subset of concepts to extract using the '--extract-concept-and-descendants=' or '--extract-refset' parameters. " +
 					"For example, to extract Clinical findings use: --extract-concept-and-descendants=404684003");
 			System.out.println();
 			System.exit(1);
 		}
 
+		List<List<Long>> refsetsListOfLists = conceptsParamToList(includeRefset);
+		List<Long> refsets = refsetsListOfLists.isEmpty() ? Collections.emptyList() : refsetsListOfLists.get(0);
 		List<List<Long>> includes = conceptsParamToList(includeConceptAndDescendants);
 		List<List<Long>> excludes = conceptsParamToList(excludeConceptAndDescendants);
 
@@ -89,9 +92,14 @@ public class SnomedTermExtractorApplication {
 			synonymlanguageRefsets = displayTermLanguageRefsets;
 		}
 
-		HierarchyAndTermsComponentFactory componentFactory = new HierarchyAndTermsComponentFactory();
-		LoadingProfile loadingProfile = LoadingProfile.light
-				.setIncludedReferenceSetFilenamePatterns(Set.of(".*der2_cRefset_LanguageSnapshot.*"));
+		HierarchyAndTermsComponentFactory componentFactory = new HierarchyAndTermsComponentFactory(refsets);
+		LoadingProfile loadingProfile = LoadingProfile.light;
+		if (refsets.isEmpty()) {
+			loadingProfile.setIncludedReferenceSetFilenamePatterns(Set.of(".*der2_cRefset_LanguageSnapshot.*"));
+		} else {
+			List<String> allRefsets = getAllRefsets(refsets, displayTermLanguageRefsets, synonymlanguageRefsets);
+			loadingProfile = loadingProfile.withRefsets(allRefsets.toArray(new String[0]));
+		}
 		new ReleaseImporter().loadEffectiveSnapshotReleaseFileStreams(releaseFileInputStreams, loadingProfile, componentFactory, false);
 
 		Map<Long, Concept> conceptMap = componentFactory.getConceptMap();
@@ -112,6 +120,28 @@ public class SnomedTermExtractorApplication {
 			}
 		}
 		System.out.printf("Total excludes %s%n", allExcludes.size());
+
+		for (Long refset : refsets) {
+			Set<Long> memberIds = componentFactory.getRefsetMembers().getOrDefault(refset, Collections.emptySet());
+			System.out.printf("Extracting refset %s with %s active members...%n", refset, memberIds.size());
+
+			Concept refsetConcept = conceptMap.get(refset);
+			String refsetPT;
+			if (refsetConcept == null) {
+				System.err.printf("Concept for Refset '%s' not found in release files, %s members found.%n", refset, memberIds.size());
+				refsetPT = refset.toString();
+			} else {
+				refsetPT = refsetConcept.getPt(firstDisplayLangRefset);
+			}
+
+			String extractFilename = format("SNOMED-CT_TermExtract_Refset_%s_%s.txt", ptToFilename(refsetPT), componentFactory.getMaxEffectiveTime());
+			try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
+				writer.write(EXPORT_HEADER);
+				writer.write("\r\n");
+				List<Concept> members = new ArrayList<>(memberIds.stream().map(conceptMap::get).toList());
+				writeConcepts(members, allExcludes, displayTermLanguageRefsets, synonymlanguageRefsets, writer);
+			}
+		}
 
 		for (List<Long> include : includes) {
 			if (include.isEmpty()) {
@@ -156,6 +186,18 @@ public class SnomedTermExtractorApplication {
 			System.out.printf("%s concepts written to TSV file %s%n", written.size(), extractFilename);
 		}
 
+	}
+
+	private List<String> getAllRefsets(List<Long> refsets, List<Long> displayTermLanguageRefsets, List<Long> synonymlanguageRefsets) {
+		List<String> all = new ArrayList<>();
+		addAll(refsets, all);
+		addAll(displayTermLanguageRefsets, all);
+		addAll(synonymlanguageRefsets, all);
+		return all;
+	}
+
+	private void addAll(List<Long> source, List<String> target) {
+		source.stream().map(Object::toString).forEach(target::add);
 	}
 
 	private List<List<Long>> conceptsParamToList(String param) {

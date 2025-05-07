@@ -52,15 +52,17 @@ Run the term extraction process on the command line:
 java -Xms4g -jar snomed-term-extractor.jar \
   --release-files=RF2_RELEASE_ZIP_FILE \
   --extract-concept-and-descendants=INCLUDE_CONCEPTS
+  --extract-refset=REFSETS
   --exclude-concept-and-descendants=EXCLUDE_CONCEPTS
   --display-term-language-refsets=LANGUAGE_REFSET
   --synonym-language-refsets=LANGUAGE_REFSET
 ```
 Where:
-- `RF2_RELEASE_ZIP_FILE` is the path to the RF2 Edition you would like to extract from
-- `INCLUDE_CONCEPTS` is a comma separated list of concept ids to extract, all descendants will also be extracted
-- `EXCLUDE_CONCEPTS` (Optional) is a comma separated list of concept ids to exclude from the extract, all descendants will also be excluded
-- `LANGUAGE_REFSET` is the id of the language refset to extract terms for, this can be a comma separated list
+- `RF2_RELEASE_ZIP_FILE` is the path to the RF2 Edition you would like to extract from.
+- `INCLUDE_CONCEPTS` is a comma separated list of concept ids to extract. A file will be created for each concept containing the concent and all active descendants.
+- `REFSETS` (Optional) is a comma separated list of reference set ids. An extract file will be created for each refset containing all active members.
+- `EXCLUDE_CONCEPTS` (Optional) is a comma separated list of concept ids to exclude from the extracts, all descendants will also be excluded.
+- `LANGUAGE_REFSET` is the id of the language refset to extract terms for, this can be a comma separated list.
 
  
 - The `display-term-language-refsets` can be an ordered list. This is used to select the best available display term for each code.

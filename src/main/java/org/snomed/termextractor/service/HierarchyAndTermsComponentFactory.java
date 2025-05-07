@@ -1,13 +1,13 @@
 package org.snomed.termextractor.service;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.ihtsdo.otf.snomedboot.domain.ConceptConstants;
 import org.ihtsdo.otf.snomedboot.factory.ImpotentComponentFactory;
 import org.snomed.termextractor.model.Concept;
 import org.snomed.termextractor.model.Description;
 
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static java.lang.String.format;
@@ -16,9 +16,15 @@ public class HierarchyAndTermsComponentFactory extends ImpotentComponentFactory 
 
 	private final Map<Long, Concept> conceptMap = new Long2ObjectOpenHashMap<>();
 	private final Map<Long, Description> descriptionMap = new Long2ObjectOpenHashMap<>();
+	private final List<Long> refsets;
+	private final Map<Long, Set<Long>> refsetMembers = new Long2ObjectOpenHashMap<>();
 	private int maxEffectiveTime = 0;
 
-	@Override
+	public HierarchyAndTermsComponentFactory(List<Long> refsets) {
+		this.refsets = refsets;
+	}
+
+    @Override
 	public void newConceptState(String conceptId, String effectiveTime, String active, String moduleId, String definitionStatusId) {
 		collectMaxEffectiveTime(effectiveTime);
 		if ("1".equals(active)) {// Concept active
@@ -60,12 +66,17 @@ public class HierarchyAndTermsComponentFactory extends ImpotentComponentFactory 
 	@Override
 	public void newReferenceSetMemberState(String[] fieldNames, String id, String effectiveTime, String active, String moduleId, String refsetId, String referencedComponentId, String... otherValues) {
 		collectMaxEffectiveTime(effectiveTime);
-		if ("1".equals(active) && fieldNames.length == 7 && fieldNames[6].equals("acceptabilityId")) {// Active language refsets
-			Description description = descriptionMap.get(SCTIDUtil.parseSCTID(referencedComponentId));
-			if (description != null) {
-				// id	effectiveTime	active	moduleId	refsetId	referencedComponentId	acceptabilityId
-				// Record acceptability
-				description.addAcceptability(SCTIDUtil.parseSCTID(refsetId), SCTIDUtil.parseSCTID(otherValues[0]));
+		if ("1".equals(active)) {
+			Long refsetIdLong = SCTIDUtil.parseSCTID(refsetId);
+			if (fieldNames.length == 7 && fieldNames[6].equals("acceptabilityId")) {// Active language refsets
+				Description description = descriptionMap.get(SCTIDUtil.parseSCTID(referencedComponentId));
+				if (description != null) {
+					// id	effectiveTime	active	moduleId	refsetId	referencedComponentId	acceptabilityId
+					// Record acceptability
+					description.addAcceptability(refsetIdLong, SCTIDUtil.parseSCTID(otherValues[0]));
+				}
+			} else if (refsets.contains(refsetIdLong)) {
+				refsetMembers.computeIfAbsent(refsetIdLong, k -> new LongOpenHashSet()).add(SCTIDUtil.parseSCTID(referencedComponentId));
 			}
 		}
 	}
@@ -85,5 +96,9 @@ public class HierarchyAndTermsComponentFactory extends ImpotentComponentFactory 
 
 	public int getMaxEffectiveTime() {
 		return maxEffectiveTime;
+	}
+
+	public Map<Long, Set<Long>> getRefsetMembers() {
+		return refsetMembers;
 	}
 }
