@@ -9,6 +9,7 @@ import org.snomed.termextractor.model.Concept;
 import org.snomed.termextractor.model.Description;
 import org.snomed.termextractor.service.HierarchyAndTermsComponentFactory;
 import org.snomed.termextractor.service.SCTIDUtil;
+import org.snomed.termextractor.service.ServiceException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -36,10 +37,17 @@ public class SnomedTermExtractorApplication {
 	public static void main(String[] args) throws ReleaseImportException, IOException {
 		SnomedTermExtractorApplication application = SpringApplication.run(SnomedTermExtractorApplication.class, args)
 				.getBean(SnomedTermExtractorApplication.class);
-		application.run();
+		try {
+			application.run();
+		} catch (ServiceException e) {
+			System.out.println();
+			System.err.printf(e.getMessage());
+			System.out.println();
+			System.exit(1);
+		}
 	}
 
-	private void run() throws ReleaseImportException, IOException {
+	private void run() throws ReleaseImportException, IOException, ServiceException {
 		if (includeConceptAndDescendants.isEmpty() && includeRefset.isEmpty()) {
 			System.out.println();
 			System.err.println("Please specify the subset of concepts to extract using the '--extract-concept-and-descendants=' or '--extract-refset' parameters. " +
@@ -106,7 +114,6 @@ public class SnomedTermExtractorApplication {
 		System.out.printf("%s active concepts loaded%n", conceptMap.size());
 
 		Set<Long> allExcludes = new LongOpenHashSet();
-		Long firstDisplayLangRefset = displayTermLanguageRefsets.get(0);
 		for (List<Long> excludeList : excludes) {
 			for (Long conceptId : excludeList) {
 				allExcludes.add(conceptId);
@@ -114,7 +121,7 @@ public class SnomedTermExtractorApplication {
 				if (concept != null) {
 					Set<Long> descendantIds = concept.getDescendantAndSelfIds();
 					System.out.printf("Excluding concept %s |%s| and descendants (%s)%n",
-							concept.getConceptId(), concept.getPt(firstDisplayLangRefset), descendantIds.size());
+							concept.getConceptId(), concept.getPt(displayTermLanguageRefsets), descendantIds.size());
 					allExcludes.addAll(descendantIds);
 				}
 			}
@@ -131,7 +138,7 @@ public class SnomedTermExtractorApplication {
 				System.err.printf("Concept for Refset '%s' not found in release files, %s members found.%n", refset, memberIds.size());
 				refsetPT = refset.toString();
 			} else {
-				refsetPT = refsetConcept.getPt(firstDisplayLangRefset);
+				refsetPT = refsetConcept.getPt(displayTermLanguageRefsets);
 			}
 
 			String extractFilename = format("SNOMED-CT_TermExtract_Refset_%s_%s.txt", ptToFilename(refsetPT), componentFactory.getMaxEffectiveTime());
@@ -155,7 +162,7 @@ public class SnomedTermExtractorApplication {
 				Concept ancestorConcept = conceptMap.get(ancestorConceptId);
 				checkActive(ancestorConcept);
 
-				String pt = ancestorConcept.getPt(firstDisplayLangRefset);
+				String pt = ancestorConcept.getPt(displayTermLanguageRefsets);
 				extractFilename = format("SNOMED-CT_TermExtract_%s_%s.txt", ptToFilename(pt), componentFactory.getMaxEffectiveTime());
 				try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
 					writer.write(EXPORT_HEADER);
@@ -168,7 +175,7 @@ public class SnomedTermExtractorApplication {
 				Concept firstConcept = conceptMap.get(include.get(0));
 				checkActive(firstConcept);
 
-				String pt = firstConcept.getPt(firstDisplayLangRefset);
+				String pt = firstConcept.getPt(displayTermLanguageRefsets);
 				extractFilename = format("SNOMED-CT_TermExtract_%s-List_%s.txt", ptToFilename(pt), componentFactory.getMaxEffectiveTime());
 
 				try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
@@ -216,12 +223,9 @@ public class SnomedTermExtractorApplication {
 		return extracts;
 	}
 
-	private void checkActive(Concept ancestorConcept) {
+	private void checkActive(Concept ancestorConcept) throws ServiceException {
 		if (ancestorConcept == null) {
-			System.out.println();
-			System.err.printf("Concept %s is not found in set of active concepts from these release files!", includeConceptAndDescendants);
-			System.out.println();
-			System.exit(1);
+			throw new ServiceException("Concept %s is not found in set of active concepts from these release files!".formatted(includeConceptAndDescendants));
 		}
 	}
 
@@ -229,8 +233,8 @@ public class SnomedTermExtractorApplication {
 		return pt.replace(" ", "-").replaceAll("[^a-zA-Z0-9_-]", "");
 	}
 
-	private void writeConcepts(List<Concept> concepts, Set<Long> allExcludes, List<Long> displayTermLangRefsets, List<Long> synonymlanguageRefsets, BufferedWriter writer) throws IOException {
-		concepts.sort(Comparator.comparing(concept -> concept.getPt(displayTermLangRefsets.get(0))));
+	private void writeConcepts(List<Concept> concepts, Set<Long> allExcludes, List<Long> displayTermLangRefsets, List<Long> synonymlanguageRefsets, BufferedWriter writer) throws IOException, ServiceException {
+		concepts.sort(Comparator.comparing(concept -> concept.getPtSafe(displayTermLangRefsets)));
 		for (Concept concept : concepts) {
 			if (allExcludes.contains(concept.getConceptId())) {
 				continue;
@@ -245,10 +249,10 @@ public class SnomedTermExtractorApplication {
 		}
 	}
 
-	private static void writeConcept(Concept concept, List<Long> displayTermLangRefsets, List<Long> synonymlanguageRefsets, BufferedWriter writer) throws IOException {
+	private static void writeConcept(Concept concept, List<Long> displayTermLangRefsets, List<Long> synonymlanguageRefsets, BufferedWriter writer) throws IOException, ServiceException {
 		writer.write(concept.getConceptId().toString());
 		writer.write("\t");
-		String pt = concept.getPt(displayTermLangRefsets.get(0));
+		String pt = concept.getPt(displayTermLangRefsets);
 		writer.write(pt);
 		writer.write("\t");
 		boolean first = true;

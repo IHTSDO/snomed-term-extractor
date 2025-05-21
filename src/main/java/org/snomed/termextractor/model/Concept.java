@@ -1,6 +1,7 @@
 package org.snomed.termextractor.model;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import org.snomed.termextractor.service.ServiceException;
 
 import java.util.*;
 
@@ -27,28 +28,29 @@ public class Concept {
 		childConcepts.add(childConcept);
 	}
 
-	public void sortAncestorsByPt(Long langRefset) {
-		childConcepts.sort(Comparator.comparing(concept -> concept.getPt(langRefset)));
-		for (Concept childConcept : childConcepts) {
-			childConcept.sortAncestorsByPt(langRefset);
-		}
+	public String getPtSafe(List<Long> langRefsets) {
+		return getPtCanReturnNull(langRefsets);
 	}
 
-	public String getPt(Long langRefset) {
+	public String getPt(List<Long> langRefsets) throws ServiceException {
+		String term = getPtCanReturnNull(langRefsets);
+		if (term == null) {
+			throw new ServiceException(("Concept %s does not have a preferred term in any " +
+					"of the requested language refsets %s.%n").formatted(conceptId, langRefsets));
+		}
+		return term;
+	}
+
+	private String getPtCanReturnNull(List<Long> langRefsets) {
 		if (pt == null) {
-			descriptions.stream()
-					.filter(description -> PREFERRED.equals(description.getAcceptabilityMap().get(langRefset)))
-					.findFirst()
-					.ifPresentOrElse(description -> pt = description.getTerm(),
-							() -> {
-								if (!descriptions.isEmpty()) {
-									pt = descriptions.iterator().next().getTerm();
-								} else {
-									pt = "";// This should never happen
-									System.err.printf("Concept %s does not have a preferred term in the requested language refset %s.%n",
-											conceptId, langRefset);
-								}
-							});
+			for (Long langRefset : langRefsets) {
+				for (Description description : descriptions) {
+					if (PREFERRED.equals(description.getAcceptabilityMap().get(langRefset))) {
+						pt = description.getTerm();
+						return pt;
+					}
+				}
+			}
 		}
 		return pt;
 	}
