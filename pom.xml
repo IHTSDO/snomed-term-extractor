@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>snomed-term-extractor</artifactId>
-	<version>2.1.1</version>
+	<version>2.2.0</version>
 	<name>SNOMED CT Term Extractor</name>
 	<description>A utility to extract subsets of SNOMED CT codes and terms from RF2 release files.</description>
 
