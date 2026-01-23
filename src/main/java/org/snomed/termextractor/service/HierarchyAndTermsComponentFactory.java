@@ -27,10 +27,8 @@ public class HierarchyAndTermsComponentFactory extends ImpotentComponentFactory 
     @Override
 	public void newConceptState(String conceptId, String effectiveTime, String active, String moduleId, String definitionStatusId) {
 		collectMaxEffectiveTime(effectiveTime);
-		if ("1".equals(active)) {// Concept active
-			Long id = SCTIDUtil.parseSCTID(conceptId);
-			conceptMap.put(id, new Concept(id));
-		}
+		Long id = SCTIDUtil.parseSCTID(conceptId);
+		conceptMap.put(id, new Concept(id));
 	}
 
 	@Override

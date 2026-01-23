@@ -101,7 +101,7 @@ public class SnomedTermExtractorApplication {
 		}
 
 		HierarchyAndTermsComponentFactory componentFactory = new HierarchyAndTermsComponentFactory(refsets);
-		LoadingProfile loadingProfile = LoadingProfile.light;
+		LoadingProfile loadingProfile = LoadingProfile.light.withInactiveConcepts();
 		if (refsets.isEmpty()) {
 			loadingProfile.setIncludedReferenceSetFilenamePatterns(Set.of(".*der2_cRefset_LanguageSnapshot.*"));
 		} else {
@@ -145,7 +145,16 @@ public class SnomedTermExtractorApplication {
 			try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
 				writer.write(EXPORT_HEADER);
 				writer.write("\r\n");
-				List<Concept> members = new ArrayList<>(memberIds.stream().map(conceptMap::get).toList());
+
+				List<Concept> members = new ArrayList<>();
+				for (Long memberId : memberIds) {
+					Concept concept = conceptMap.get(memberId);
+					if (concept != null) {
+						members.add(concept);
+					} else {
+						System.err.printf("Concept '%s' within Refset '%s' not found in release files so will not be extracted.%n", memberId, refset);
+					}
+				}
 				writeConcepts(members, allExcludes, displayTermLanguageRefsets, synonymlanguageRefsets, writer);
 			}
 		}
