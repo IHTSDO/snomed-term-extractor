@@ -7,10 +7,9 @@ import org.ihtsdo.otf.snomedboot.factory.ImpotentComponentFactory;
 import org.snomed.termextractor.model.Concept;
 import org.snomed.termextractor.model.Description;
 
-import java.util.*;
-import java.util.regex.Pattern;
-
-import static java.lang.String.format;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class HierarchyAndTermsComponentFactory extends ImpotentComponentFactory {
 
@@ -18,10 +17,12 @@ public class HierarchyAndTermsComponentFactory extends ImpotentComponentFactory 
 	private final Map<Long, Description> descriptionMap = new Long2ObjectOpenHashMap<>();
 	private final List<Long> refsets;
 	private final Map<Long, Set<Long>> refsetMembers = new Long2ObjectOpenHashMap<>();
+	private final boolean loadFsn;
 	private int maxEffectiveTime = 0;
 
-	public HierarchyAndTermsComponentFactory(List<Long> refsets) {
+	public HierarchyAndTermsComponentFactory(List<Long> refsets, boolean loadFsn) {
 		this.refsets = refsets;
+		this.loadFsn = loadFsn;
 	}
 
     @Override
@@ -34,11 +35,15 @@ public class HierarchyAndTermsComponentFactory extends ImpotentComponentFactory 
 	@Override
 	public void newDescriptionState(String id, String effectiveTime, String active, String moduleId, String conceptId, String languageCode, String typeId, String term, String caseSignificanceId) {
 		collectMaxEffectiveTime(effectiveTime);
-		if ("1".equals(active) && typeId.equals("900000000000013009")) {// Active synonym
+		boolean fsn = typeId.equals("900000000000003001");
+		if (fsn) {
+			System.out.println();
+		}
+		if ("1".equals(active) && (typeId.equals("900000000000013009") || (loadFsn && fsn))) {// Active synonym or FSN
 			Concept concept = conceptMap.get(SCTIDUtil.parseSCTID(conceptId));
 			if (concept != null) {// Concept will be null if it's inactive. No need to extract these.
 				Long descriptionId = SCTIDUtil.parseSCTID(id);
-				Description description = new Description(descriptionId, term, languageCode);
+				Description description = new Description(descriptionId, term, languageCode, fsn);
 				concept.addDescription(description);
 				descriptionMap.put(descriptionId, description);
 			}

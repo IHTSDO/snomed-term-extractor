@@ -10,12 +10,14 @@ public class Description {
 	private final String term;
 	private final String languageCode;
 	private final Map<Long, Long> acceptabilityMap;
+	private final boolean fsn;
 
-	public Description(Long descriptionId, String term, String languageCode) {
+	public Description(Long descriptionId, String term, String languageCode, boolean fsn) {
 		this.descriptionId = descriptionId;
 		this.term = term;
 		this.languageCode = languageCode;
 		acceptabilityMap = new HashMap<>();
+		this.fsn = fsn;
 	}
 
 	public boolean isPreferredOrAcceptable(List<Long> langRefsets) {
@@ -45,5 +47,9 @@ public class Description {
 
 	public Map<Long, Long> getAcceptabilityMap() {
 		return acceptabilityMap;
+	}
+
+	public boolean isFsn() {
+		return fsn;
 	}
 }

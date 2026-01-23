@@ -63,6 +63,7 @@ Where:
 - `REFSETS` (Optional) is a comma separated list of reference set ids. An extract file will be created for each refset containing all active members.
 - `EXCLUDE_CONCEPTS` (Optional) is a comma separated list of concept ids to exclude from the extracts, all descendants will also be excluded.
 - `LANGUAGE_REFSET` is the id of the language refset to extract terms for, this can be a comma separated list.
+- `--fsn-language-refsets=LANGUAGE_REFSET` is an optional parameter. Including it will add an FSN column to the output with a single FSN term, selected using the given language refsets.
 
  
 - The `display-term-language-refsets` can be an ordered list. This is used to select the best available display term for each code.

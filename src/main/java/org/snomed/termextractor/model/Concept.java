@@ -13,6 +13,7 @@ public class Concept {
 	private final List<Description> descriptions;
 	private final List<Concept> childConcepts;
 	private String pt;
+	private String fsn;
 
 	public Concept(Long conceptId) {
 		this.conceptId = conceptId;
@@ -28,12 +29,35 @@ public class Concept {
 		childConcepts.add(childConcept);
 	}
 
+	public String getFSN(List<Long> langRefsets) throws ServiceException {
+		String term = getFSNOrNull(langRefsets);
+		if (term == null) {
+			throw new ServiceException(("Concept %s does not have an FSN in any " +
+					"of the requested language refsets %s.%n").formatted(conceptId, langRefsets));
+		}
+		return term;
+	}
+
+	private String getFSNOrNull(List<Long> langRefsets) {
+		if (fsn == null) {
+			for (Long langRefset : langRefsets) {
+				for (Description description : descriptions) {
+					if (description.isFsn() && PREFERRED.equals(description.getAcceptabilityMap().get(langRefset))) {
+						fsn = description.getTerm();
+						return fsn;
+					}
+				}
+			}
+		}
+		return fsn;
+	}
+
 	public String getPtSafe(List<Long> langRefsets) {
-		return getPtCanReturnNull(langRefsets);
+		return getPtOrNull(langRefsets);
 	}
 
 	public String getPt(List<Long> langRefsets) throws ServiceException {
-		String term = getPtCanReturnNull(langRefsets);
+		String term = getPtOrNull(langRefsets);
 		if (term == null) {
 			throw new ServiceException(("Concept %s does not have a preferred term in any " +
 					"of the requested language refsets %s.%n").formatted(conceptId, langRefsets));
@@ -41,11 +65,11 @@ public class Concept {
 		return term;
 	}
 
-	private String getPtCanReturnNull(List<Long> langRefsets) {
+	private String getPtOrNull(List<Long> langRefsets) {
 		if (pt == null) {
 			for (Long langRefset : langRefsets) {
 				for (Description description : descriptions) {
-					if (PREFERRED.equals(description.getAcceptabilityMap().get(langRefset))) {
+					if (!description.isFsn() && PREFERRED.equals(description.getAcceptabilityMap().get(langRefset))) {
 						pt = description.getTerm();
 						return pt;
 					}
