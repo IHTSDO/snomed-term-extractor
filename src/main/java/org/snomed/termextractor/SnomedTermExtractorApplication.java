@@ -164,7 +164,7 @@ public class SnomedTermExtractorApplication {
 						System.err.printf("Concept '%s' within Refset '%s' not found in release files so will not be extracted.%n", memberId, refset);
 					}
 				}
-				writeConcepts(members, allExcludes, displayTermLanguageRefsets, synonymlanguageRefsets, fsnlanguageRefsets, writer);
+				writeConcepts(members, false, allExcludes, displayTermLanguageRefsets, synonymlanguageRefsets, fsnlanguageRefsets, writer);
 			}
 		}
 
@@ -185,7 +185,7 @@ public class SnomedTermExtractorApplication {
 				try (BufferedWriter writer = new BufferedWriter(new FileWriter(extractFilename))) {
 					writer.write(getExportHeader(fsnlanguageRefsets));
 					writer.write("\r\n");
-					writeConcepts(Collections.singletonList(ancestorConcept), allExcludes, displayTermLanguageRefsets, synonymlanguageRefsets, fsnlanguageRefsets, writer);
+					writeConcepts(Collections.singletonList(ancestorConcept), true, allExcludes, displayTermLanguageRefsets, synonymlanguageRefsets, fsnlanguageRefsets, writer);
 				}
 
 			} else {
@@ -256,7 +256,7 @@ public class SnomedTermExtractorApplication {
 		return pt.replace(" ", "-").replaceAll("[^a-zA-Z0-9_-]", "");
 	}
 
-	private void writeConcepts(List<Concept> concepts, Set<Long> allExcludes, List<Long> displayTermLangRefsets, List<Long> synonymlanguageRefsets,
+	private void writeConcepts(List<Concept> concepts, boolean includeDescendants, Set<Long> allExcludes, List<Long> displayTermLangRefsets, List<Long> synonymlanguageRefsets,
 			List<Long> fsnlanguageRefsets, BufferedWriter writer) throws IOException, ServiceException {
 
 		concepts.sort(Comparator.comparing(concept -> concept.getPtSafe(displayTermLangRefsets)));
@@ -270,7 +270,9 @@ public class SnomedTermExtractorApplication {
 					System.out.print(".");
 				}
 			}
-			writeConcepts(concept.getChildConcepts(), allExcludes, displayTermLangRefsets, synonymlanguageRefsets, fsnlanguageRefsets, writer);
+			if (includeDescendants) {
+				writeConcepts(concept.getChildConcepts(), true, allExcludes, displayTermLangRefsets, synonymlanguageRefsets, fsnlanguageRefsets, writer);
+			}
 		}
 	}
 
